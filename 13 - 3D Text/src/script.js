@@ -42,8 +42,7 @@ fontLoader.load(
 	(font)=> {
         const textGeometry = new THREE.TextBufferGeometry(
             'Tobey Maguire',
-            {
-                
+            {  
                 font: font,
                 size: 0.5,
                 height:0.2,
@@ -65,6 +64,13 @@ fontLoader.load(
         console.log(textGeometry.boundingBox)
         const textMaterial = new THREE.MeshMatcapMaterial({matcap:matcapTexture })
         text = new THREE.Mesh(textGeometry, textMaterial);
+        const time = new THREE.Clock();
+        const rotateText = () => {
+            let elapsedTime = time.getElapsedTime;
+            
+            window.requestAnimationFrame(rotateText);
+        }
+        rotateText();
         scene.add(text)
 
 
@@ -81,6 +87,7 @@ fontLoader.load(
             scene.add(donut);
         }
         console.timeEnd('donuts')
+        
     },
 
 	// onProgress callback
@@ -150,8 +157,7 @@ const clock = new THREE.Clock()
 const tick = () =>
 {
     const elapsedTime = clock.getElapsedTime()
-
-    // Update controls
+  
     controls.update()
 
     // Render

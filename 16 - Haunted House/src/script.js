@@ -19,6 +19,38 @@ const scene = new THREE.Scene();
  * Textures
  */
 const textureLoader = new THREE.TextureLoader();
+const doorColorTexture = textureLoader.load("/textures/door/color.jpg");
+const doorAlphaTexture = textureLoader.load("/textures/door/alpha.jpg");
+const doorAmbientOcclusionTexture = textureLoader.load(
+  "/textures/door/ambientOcclusion.jpg"
+);
+const doorHeightTexture = textureLoader.load("/textures/door/height.jpg");
+const doorNormalTexture = textureLoader.load("/textures/door/normal.jpg");
+const doorMetalnessTexture = textureLoader.load("/textures/door/metalness.jpg");
+const doorRoughnessTexture = textureLoader.load("/textures/door/roughness.jpg");
+
+const bricksColorTexture = textureLoader.load("/textures/bricks/color.jpg");
+const bricksAmbientOcclusionTexture = textureLoader.load(
+  "/textures/bricks/ambientOcclusion.jpg"
+);
+const bricksNormalTexture = textureLoader.load("/textures/bricks/normal.jpg");
+const brickxRoughnessTexture = textureLoader.load(
+  "/textures/bricks/roughness.jpg"
+);
+
+const grassColorTexture = textureLoader.load("/textures/grass/color.jpg");
+const grassAmbientOcclusionTexture = textureLoader.load(
+  "/textures/grass/ambientOcclusion.jpg"
+);
+const grassNormalTexture = textureLoader.load("/textures/grass/normal.jpg");
+const grassRoughnessTexture = textureLoader.load(
+  "/textures/grass/roughness.jpg"
+);
+
+grassColorTexture.wrapS = THREE.RepeatWrapping
+grassAmbientOcclusionTexture.wrapS=THREE.RepeatWrapping
+grassNormalTexture.wrapS
+
 
 /**
  * House
@@ -29,8 +61,19 @@ scene.add(house);
 //Walls
 const walls = new THREE.Mesh(
   new THREE.BoxBufferGeometry(4, 2.5, 4),
-  new THREE.MeshStandardMaterial({ color: "#ac8e82" })
+  new THREE.MeshStandardMaterial({
+    map: bricksColorTexture,
+    aoMap: bricksAmbientOcclusionTexture,
+    transparent: true,
+    normalMap: bricksNormalTexture,
+    roughnessMap: brickxRoughnessTexture,
+  })
 );
+walls.geometry.setAttribute(
+  "uv2",
+  new THREE.Float32BufferAttribute(walls.geometry.attributes.uv.array, 2)
+);
+
 walls.position.y = 2.5 / 2;
 house.add(walls);
 
@@ -45,8 +88,23 @@ house.add(roof);
 
 //door
 const door = new THREE.Mesh(
-  new THREE.PlaneBufferGeometry(2, 2),
-  new THREE.MeshStandardMaterial({ color: "#aa7b7b" })
+  new THREE.PlaneBufferGeometry(2.2, 2.2, 100, 100),
+  new THREE.MeshStandardMaterial({
+    map: doorColorTexture,
+    alphaMap: doorAlphaTexture,
+    transparent: true,
+    aoMap: doorAmbientOcclusionTexture,
+    displacementMap: doorHeightTexture,
+    displacementScale: 0.1,
+    normalMap: doorNormalTexture,
+    metalnessMap: doorMetalnessTexture,
+    roughness: doorRoughnessTexture,
+  })
+);
+
+door.geometry.setAttribute(
+  "uv2",
+  new THREE.Float32BufferAttribute(door.geometry.attributes.uv.array, 2)
 );
 door.position.z = 2.01;
 door.position.y = 1;
@@ -77,17 +135,17 @@ const gravesGeometry = new THREE.BoxBufferGeometry(0.6, 0.8, 0.2);
 const gravesMaterial = new THREE.MeshStandardMaterial({ color: "#b2b6b1" });
 
 for (let i = 0; i < 50; i++) {
-    const angle = Math.random()*Math.PI*2;
-    const radius = 3+Math.random()*6;
-    const x = Math.sin(angle)*radius;
-    const z = Math.cos(angle)*radius;
+  const angle = Math.random() * Math.PI * 2;
+  const radius = 3 + Math.random() * 6;
+  const x = Math.sin(angle) * radius;
+  const z = Math.cos(angle) * radius;
 
-    const grave = new THREE.Mesh(gravesGeometry, gravesMaterial);
-    grave.position.set(x,0.3,z);
-    grave.rotation.y = (Math.random()-0.4)*0.4;
-    grave.rotation.z = (Math.random()-0.5)*Math.PI*2;
+  const grave = new THREE.Mesh(gravesGeometry, gravesMaterial);
+  grave.position.set(x, 0.3, z);
+  grave.rotation.y = (Math.random() - 0.4) * 0.4;
+  grave.rotation.z = (Math.random() - 0.5) * Math.PI * 2;
 
-    graves.add(grave);
+  graves.add(grave);
 }
 
 // Temporary sphere
@@ -101,7 +159,17 @@ sphere.position.y = 1;
 // Floor
 const floor = new THREE.Mesh(
   new THREE.PlaneGeometry(20, 20),
-  new THREE.MeshStandardMaterial({ color: "#a9c388" })
+  new THREE.MeshStandardMaterial({
+    map: grassColorTexture,
+    aoMap: grassAmbientOcclusionTexture,
+    transparent:true,
+    roughnessMap: grassRoughnessTexture,
+    
+  })
+);
+floor.geometry.setAttribute(
+  "uv2",
+  new THREE.Float32BufferAttribute(floor.geometry.attributes.uv.array, 2)
 );
 floor.rotation.x = -Math.PI * 0.5;
 floor.position.y = 0;
@@ -125,9 +193,13 @@ gui.add(moonLight.position, "z").min(-5).max(5).step(0.001);
 scene.add(moonLight);
 
 //Door light
-const doorLight = new THREE.PointLight('#ff7d46',1,7)
-doorLight.position.set(0, 2.2, 2.7)
+const doorLight = new THREE.PointLight("#ff7d46", 1, 7);
+doorLight.position.set(0, 2.2, 2.7);
 house.add(doorLight); //38.05
+
+//fog
+const fog = new THREE.Fog("#262837", 1, 20);
+scene.fog = fog;
 
 /**
  * Sizes
@@ -178,7 +250,7 @@ const renderer = new THREE.WebGLRenderer({
 });
 renderer.setSize(sizes.width, sizes.height);
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-
+renderer.setClearColor("#262837");
 /**
  * Animate
  */

@@ -46,10 +46,31 @@ const grassNormalTexture = textureLoader.load("/textures/grass/normal.jpg");
 const grassRoughnessTexture = textureLoader.load(
   "/textures/grass/roughness.jpg"
 );
+grassColorTexture.repeat.set(8,8);
+grassAmbientOcclusionTexture.repeat.set(8.8);
+grassNormalTexture.repeat.set(8,8);
+grassRoughnessTexture.repeat.set(8.8);
+
+grassColorTexture.wrapT = THREE.RepeatWrapping
+grassAmbientOcclusionTexture.wrapT=THREE.RepeatWrapping
+grassNormalTexture.wrapT = THREE.RepeatWrapping
+grassRoughnessTexture.wrapT=THREE.RepeatWrapping;
+
 
 grassColorTexture.wrapS = THREE.RepeatWrapping
 grassAmbientOcclusionTexture.wrapS=THREE.RepeatWrapping
-grassNormalTexture.wrapS
+grassNormalTexture.wrapS = THREE.RepeatWrapping
+grassRoughnessTexture.wrapS=THREE.RepeatWrapping;
+
+//ghost
+const ghost1 = new THREE.PointLight('#ff00ff',2,3);
+scene.add(ghost1);
+
+const ghost2 = new THREE.PointLight('#00ffff',2,3);
+scene.add(ghost2);
+const ghost3 = new THREE.PointLight('#ffff00',2,3);
+scene.add(ghost3);
+
 
 
 /**
@@ -257,7 +278,20 @@ renderer.setClearColor("#262837");
 const clock = new THREE.Clock();
 
 const tick = () => {
-  const elapsedTime = clock.getElapsedTime();
+  const elapsedTime = clock.getElapsedTime()*0.5;
+  ghost1.position.x = Math.cos(elapsedTime)*4;
+  ghost1.position.z=Math.sin(elapsedTime)*4;
+  ghost1.position.y = Math.sin(elapsedTime*3);
+
+  const elapsedTime1 = -clock.getElapsedTime()*0.32;
+  ghost2.position.x = Math.cos(elapsedTime1)*5;
+  ghost2.position.z=Math.sin(elapsedTime1)*5;
+  ghost2.position.y = Math.sin(elapsedTime1*3);
+  
+  const elapsedTime2 = -clock.getElapsedTime()*0.18;
+  ghost3.position.x = Math.cos(elapsedTime2)*3;
+  ghost3.position.z=Math.sin(elapsedTime2)*5;
+  ghost3.position.y = Math.sin(elapsedTime2*3);
 
   // Update controls
   controls.update();

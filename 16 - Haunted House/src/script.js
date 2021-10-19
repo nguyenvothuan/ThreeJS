@@ -160,12 +160,11 @@ for (let i = 0; i < 50; i++) {
   const radius = 3 + Math.random() * 6;
   const x = Math.sin(angle) * radius;
   const z = Math.cos(angle) * radius;
-
   const grave = new THREE.Mesh(gravesGeometry, gravesMaterial);
+  grave.castShadow = true
   grave.position.set(x, 0.3, z);
   grave.rotation.y = (Math.random() - 0.4) * 0.4;
   grave.rotation.z = (Math.random() - 0.5) * Math.PI * 2;
-
   graves.add(grave);
 }
 
@@ -195,7 +194,7 @@ floor.geometry.setAttribute(
 floor.rotation.x = -Math.PI * 0.5;
 floor.position.y = 0;
 scene.add(floor);
-
+floor.receiveShadow=true;
 /**
  * Lights
  */

@@ -15,7 +15,23 @@ debugObject.createSphere = () => {
     z: 3 * (Math.random() - 0.5),
   });
 };
+debugObject.createBox = () => {
+  createBox(Math.random() * 0.5, Math.random() * 0.5, Math.random() * 0.5, {
+    x: 3 * (Math.random() - 0.5),
+    y: 3,
+    z: 3 * (Math.random() - 0.5),
+  });
+};
 gui.add(debugObject, "createSphere");
+gui.add(debugObject, 'createBox');
+debugObject.reset = () =>{
+  for (const object of objectsToUpdate){
+    object.body.removeEventListener("collide");
+    world.removeBody(object.body);
+    scene.remove(object.mesh);
+  }
+}
+gui.add(debugObject, 'reset')
 /**
  * Base
  */
@@ -44,7 +60,8 @@ const environmentMapTexture = cubeTextureLoader.load([
 //world
 const world = new CANNON.World();
 world.gravity.set(0, -9.82, 0);
-
+world.broadphase = new CANNON.SAPBroadphase(world);
+world.allowSleep=true; 
 //material
 const defaultMaterial = new CANNON.Material("default");
 
@@ -53,7 +70,7 @@ const defaultContactMaterial = new CANNON.ContactMaterial(
   defaultMaterial,
   {
     friction: 0.1,
-    restitution: 0.3,
+    restitution: 0.7,
   }
 );
 world.addContactMaterial(defaultContactMaterial);
@@ -76,6 +93,19 @@ floorBody.quaternion.setFromAxisAngle(new CANNON.Vec3(-1, 0, 0), Math.PI / 2);
 floorBody.material = defaultMaterial;
 world.addBody(floorBody);
 world.defaultContactMaterial = defaultContactMaterial;
+
+const hitSound = new Audio('/sounds/hit.mp3');
+const playHitSound = (collision) => {
+  const impactStrength = collision.contact.getImpactVelocityAlongNormal();
+  if (impactStrength>1.5) {
+    hitSound.volume = Math.random();
+    hitSound.currentTime = 0;
+  hitSound.play();
+  }
+  console.log(collision);
+}
+
+
 /**
  * Test sphere
  */
@@ -176,18 +206,15 @@ renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
 //util
 const objectsToUpdate = [];
-const SphereGeometry = new THREE.SphereBufferGeometry(1,20,20);
+const SphereGeometry = new THREE.SphereBufferGeometry(1, 20, 20);
 const SphereMaterial = new THREE.MeshStandardMaterial({
   metalness: 0.3,
   roughness: 0.4,
   envMap: environmentMapTexture,
 });
 const createSphere = (radius, position) => {
-  const mesh = new THREE.Mesh(
-    SphereGeometry,
-    SphereMaterial
-  );
-  mesh.scale.set(radius, radius, radius)
+  const mesh = new THREE.Mesh(SphereGeometry, SphereMaterial);
+  mesh.scale.set(radius, radius, radius);
   mesh.castShadow = true;
   mesh.position.copy(position);
   scene.add(mesh);
@@ -201,43 +228,41 @@ const createSphere = (radius, position) => {
   });
   body.position.copy(position);
   world.addBody(body);
-
+  body.addEventListener('collide', playHitSound);
   objectsToUpdate.push({
     mesh: mesh,
     body: body,
   });
 };
 
-const BoxesGeometry = new THREE.BoxGeometry(1,1,1);
-const BoxesMaterial = new THREE.MeshStandardMaterial({
-  metalness:0.3,
+const BoxGeometry = new THREE.BoxGeometry(1, 1, 1);
+const BoxMaterial = new THREE.MeshStandardMaterial({
+  metalness: 0.3,
   roughness: 0.1,
   envMap: environmentMapTexture,
-})
-const createBox = ({width, height, depth}, position) =>{
-  const mesh = new THREE.Mesh(
-    BoxesGeometry,
-    BoxesMaterial
-  )
+});
+const createBox = (width, height, depth, position) => {
+  const mesh = new THREE.Mesh(BoxGeometry, BoxMaterial);
   mesh.position.copy(position);
-  mesh.scale(width, height, depth);
+  mesh.scale.set(width, height, depth);
   mesh.castShadow = true;
-  
-  const shape = new CANNON.Box(new CANNON.Vec3(width, height, depth));
+  scene.add(mesh);
+  const shape = new CANNON.Box(new CANNON.Vec3(width * 0.5, height * 0.5, depth * 0.5));
   const body = new CANNON.Body({
     mass: 1,
-    position: new CANNON.Vec3(0,4,0),
+    position: new CANNON.Vec3(0, 4, 0),
     shape: shape,
     material: defaultMaterial,
   });
   body.position.copy(position);
+  body.addEventListener('collide', playHitSound);
   world.addBody(body);
-objectsToUpdate.push({
-  mesh:mesh,
-  body: body,
-})
-}
-createBox({width:2, height:2, depth: 2},{x:1, y:2, z:3} );
+  objectsToUpdate.push({
+    mesh: mesh,
+    body: body,
+  });
+};
+createBox(2, 2, 2, { x: 1, y: 2, z: 3 });
 createSphere(0.5, { x: 0, y: 4, z: 0 });
 createSphere(0.5, { x: 1, y: 3, z: 0 });
 /**
@@ -257,6 +282,7 @@ const tick = () => {
   // sphere.position.copy(sphereBody.position);
   for (const object of objectsToUpdate) {
     object.mesh.position.copy(object.body.position);
+    object.mesh.quaternion.copy(object.body.quaternion);
   }
 
   // Update controls
